@@ -21,7 +21,9 @@ class HashTable:
     """
 
     def __init__(self, capacity):
-        # Your code here
+        self.capacity = capacity
+        self.bucket = [None] * capacity
+        self.count = 0
 
 
     def get_num_slots(self):
@@ -46,15 +48,33 @@ class HashTable:
         # Your code here
 
 
-    def fnv1(self, key):
+    def fnv1_64(self, key):
         """
         FNV-1 Hash, 64-bit
 
         Implement this, and/or DJB2.
         """
+        prime_64 = 1099511628211
+        hash_64 = 14695981039346656037
 
-        # Your code here
+        for char in key:
+            hash_64 = hash_64 * prime_64
+            hash_64 = hash_64 ^ ord(char)
+        return hash
 
+    def fnv1_32(self, key):
+        """
+        FNV-1 Hash, 64-bit
+
+        Implement this, and/or DJB2.
+        """
+        prime_32 = 16777619
+        hash_32 = 2166136261
+
+        for char in key:
+            hash_32 = hash_32 * prime_32
+            hash_32 = hash_32 ^ ord(char)
+        return hash
 
     def djb2(self, key):
         """
@@ -62,7 +82,11 @@ class HashTable:
 
         Implement this, and/or FNV-1.
         """
-        # Your code here
+        hash = 5381
+        for x in key:
+            # hash = ((hash << 5) + hash) + ord(x)
+            hash = (hash*33) + ord(x)
+        return hash
 
 
     def hash_index(self, key):
@@ -70,7 +94,7 @@ class HashTable:
         Take an arbitrary key and return a valid integer index
         between within the storage capacity of the hash table.
         """
-        #return self.fnv1(key) % self.capacity
+        #return self.fnv1_64(key) % self.capacity
         return self.djb2(key) % self.capacity
 
     def put(self, key, value):
@@ -81,8 +105,8 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-
+        index = self.hash_index(key)
+        self.bucket[index] = value
 
     def delete(self, key):
         """
@@ -92,8 +116,8 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-
+        index = self.hash_index(key)
+        self.bucket[index] = None
 
     def get(self, key):
         """
@@ -103,7 +127,8 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        index = self.hash_index(key)
+        return self.bucket[index]
 
 
     def resize(self, new_capacity):
