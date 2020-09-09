@@ -21,7 +21,10 @@ class HashTable:
     """
 
     def __init__(self, capacity):
-        self.capacity = capacity
+        if capacity >= MIN_CAPACITY:
+            self.capacity = capacity
+        else:
+            self.capacity = MIN_CAPACITY
         self.bucket = [None] * capacity
         self.count = 0
 
@@ -37,6 +40,7 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        return len(self.hash_table_list)
 
 
     def get_load_factor(self):
@@ -46,34 +50,30 @@ class HashTable:
         Implement this.
         """
         # Your code here
+        return self.count / self.get_num_slots()
 
 
-    def fnv1_64(self, key):
+    def fnv1(self, key):
         """
         FNV-1 Hash, 64-bit
 
         Implement this, and/or DJB2.
         """
-        prime_64 = 1099511628211
-        hash_64 = 14695981039346656037
-
-        for char in key:
-            hash_64 = hash_64 * prime_64
-            hash_64 = hash_64 ^ ord(char)
-        return hash
-
-    def fnv1_32(self, key):
-        """
-        FNV-1 Hash, 64-bit
-
-        Implement this, and/or DJB2.
-        """
+        # hash = FNV_offset
+        # for each byte_of_data to be hashed:
+            # hash = hash * FNV_prime
+            # hash = has XOR byte_of_data
+        # return hash
+        # 32 bit
         prime_32 = 16777619
         hash_32 = 2166136261
+        # 64 bit
+        fnv_prime_64 = 1099511628211  # (in hex: 0x100000001b3)
+        hash_64 = 14695981039346656037  # (in hex: 0xcbf29ce484222325)
 
         for char in key:
-            hash_32 = hash_32 * prime_32
-            hash_32 = hash_32 ^ ord(char)
+            hash_64 = hash_64 * fnv_prime_64
+            hash_64 = hash_64 ^ ord(char)
         return hash
 
     def djb2(self, key):
@@ -84,9 +84,10 @@ class HashTable:
         """
         hash = 5381
         for x in key:
-            # hash = ((hash << 5) + hash) + ord(x)
-            hash = (hash*33) + ord(x)
-        return hash
+            # shift variable, then add it, then add the ord
+            hash = ((hash << 5) + hash) + ord(x)
+            # hash = (hash*33) + ord(x) ??
+        return hash & 0xffffffff
 
 
     def hash_index(self, key):
@@ -94,7 +95,7 @@ class HashTable:
         Take an arbitrary key and return a valid integer index
         between within the storage capacity of the hash table.
         """
-        #return self.fnv1_64(key) % self.capacity
+        #return self.fnv1(key) % self.capacity
         return self.djb2(key) % self.capacity
 
     def put(self, key, value):
@@ -105,8 +106,40 @@ class HashTable:
 
         Implement this.
         """
-        index = self.hash_index(key)
-        self.bucket[index] = value
+        # DAY 1:
+        # index = self.hash_index(key)
+        # self.bucket[index] = value
+
+        # DAY 2:
+        index = self.hash_index(key)  # returns a number
+        new_node = HashTableEntry(key, value)  # returns a node Object
+        cur_node = self.bucket[index]  # returns node Object or None
+
+
+        if self.bucket[index] == None:
+            # if node at index does NOT exist, then insert new_node at index
+            self.bucket[index] = new_node
+            self.count += 1
+        elif self.bucket[index] is not None and self.bucket[index].key == key:
+            # if node at index exists, and node.key matches key, replace value at key
+            self.bucket[index].value = value
+
+        elif self.bucket[index] is not None:
+            # if node at index exits...
+            while cur_node is not None:
+                # loop while cur_node exists...
+                if cur_node.next is None:
+                    # ...if next node is None, then insert node into next index
+                    cur_node.next = new_node
+                    self.count += 1
+                    return cur_node
+                elif cur_node.next is not None and cur_node.next.key == key:
+                    # ...if next node exists, and next node.key matches, replace value
+                    cur_node.next.value = value
+                    return cur_node.next
+                else:
+                    # move over to next node, run through the loop again
+                    cur_node = cur_node.next
 
     def delete(self, key):
         """
@@ -116,8 +149,51 @@ class HashTable:
 
         Implement this.
         """
-        index = self.hash_index(key)
-        self.bucket[index] = None
+        # DAY 1:
+        # index = self.hash_index(key)
+        # if self.bucket[index] is None:
+        #     print(f"{key} does not exist");
+        # else:
+        #     self.bucket[index] = None
+
+        # DAY 2:
+        index = self.hash_index(key)  # returns a number
+        is_true = True
+        cur_node = self.bucket[index]  # returns a node Object
+        prev_node = None
+
+        while cur_node is not None:
+            # loop while cur_node exists..
+            if cur_node.key == key:
+                # ...if node's key matches...
+                if is_true:
+                    if cur_node.next == None:
+                        # ...if next node does NOT exist, set index to None (delete)
+                        self.bucket[index] = None
+                        cur_node = None
+                    else:
+                        # ...if next node exists, set index to next node
+                        self.bucket[index] = cur_node.next
+                        cur_node = None
+                else:
+                    if cur_node.next == None:
+                        prev_node.next = None
+                        cur_node = None
+                    else:
+                        prev_node.next = cur_node.next
+                        cur_node = None
+                # exits out
+                return
+
+            is_true = False
+            if cur_node.next == None:
+                # ...if next node is None, then end
+                return
+
+            prev_node = cur_node
+            cur_node = cur_node.next
+
+
 
     def get(self, key):
         """
@@ -127,8 +203,25 @@ class HashTable:
 
         Implement this.
         """
+        # DAY 1:
+        # index = self.hash_index(key)
+        # return self.bucket[index]
+
+        # DAY 2:
         index = self.hash_index(key)
-        return self.bucket[index]
+        cur_node = self.bucket[index]
+
+        # if cur_node exists, and the key matches node key: return the node value
+        if cur_node is not None and cur_node.key == key:
+            return cur_node.value
+        else:
+            while cur_node is not None:
+                if cur_node.key == key:
+                    return cur_node.value
+                cur_node = cur_node.next
+
+        return None
+
 
 
     def resize(self, new_capacity):
