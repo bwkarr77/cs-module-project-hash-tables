@@ -40,7 +40,7 @@ class HashTable:
         Implement this.
         """
         # Your code here
-        return len(self.hash_table_list)
+        return len(self.bucket)
 
 
     def get_load_factor(self):
@@ -157,41 +157,89 @@ class HashTable:
         #     self.bucket[index] = None
 
         # DAY 2:
+        ##
+        # index = self.hash_index(key)  # returns a number
+        # is_traversing = True
+        # cur_node = self.bucket[index]  # returns a node Object
+        #
+        # while is_traversing:
+        #     # while is_traversing is TRUE...
+        #     if cur_node.key:
+        #         # ...if current node key exists...
+        #         if cur_node.key == key:
+        #             # ...if current node key matches, set current to None
+        #             cur_node.value = None
+        #             return None
+        #         else:
+        #             if cur_node.next:
+        #                 cur_node = cur_node.next
+        #             else:
+        #                 return None
+        #     else:
+        #         return "Error message"
+        ##
         index = self.hash_index(key)  # returns a number
-        is_true = True
+        is_traversing = True
         cur_node = self.bucket[index]  # returns a node Object
         prev_node = None
 
-        while cur_node is not None:
-            # loop while cur_node exists..
-            if cur_node.key == key:
-                # ...if node's key matches...
-                if is_true:
-                    if cur_node.next == None:
-                        # ...if next node does NOT exist, set index to None (delete)
-                        self.bucket[index] = None
-                        cur_node = None
-                    else:
-                        # ...if next node exists, set index to next node
-                        self.bucket[index] = cur_node.next
-                        cur_node = None
+        while is_traversing:
+            # while is_traversing is TRUE...
+            if cur_node.key:
+                # ...if current node key exists...
+                if cur_node.key == key:
+                    # ...if current node key matches, set current to None
+                    cur_node.value = None
+                # no need for an else statement
+                if cur_node.next:
+                    # ...if next node exists, set current node to next node
+                    self.bucket[index] = cur_node.next
+                    cur_node = cur_node.next
                 else:
-                    if cur_node.next == None:
-                        prev_node.next = None
-                        cur_node = None
-                    else:
-                        prev_node.next = cur_node.next
-                        cur_node = None
-                # exits out
-                return
+                    self.bucket[index] = None
+                    cur_node = None
+                return None
+            else:
+                return "Error message"
+        ##
+        # index = self.hash_index(key)  # returns a number
+        # is_traversing = True
+        # cur_node = self.bucket[index]  # returns a node Object
+        # prev_node = None
+        #
+        # while cur_node is not None:
+        #     # loop while cur_node exists..
+        #     if cur_node.key == key:
+        #         # ...if node's key matches...
+        #         if is_traversing:
+        #             if cur_node.next == None:
+        #                 # ...if next node does NOT exist, set index to None (delete)
+        #                 self.bucket[index] = None
+        #                 cur_node = None
+        #             else:
+        #                 # ...if next node exists, set index to next node
+        #                 self.bucket[index] = cur_node.next
+        #                 cur_node = None
+        #         else:
+        #             if cur_node.next == None:
+        #                 prev_node.next = None
+        #                 cur_node = None
+        #             else:
+        #                 prev_node.next = cur_node.next
+        #                 cur_node = None
+        #         # exits out
+        #         return
+        #
+        #     is_traversing = False
+        #     if cur_node.next == None:
+        #         # ...if next node is None, then end
+        #         return
+        #
+        #     prev_node = cur_node
+        #     cur_node = cur_node.next
 
-            is_true = False
-            if cur_node.next == None:
-                # ...if next node is None, then end
-                return
 
-            prev_node = cur_node
-            cur_node = cur_node.next
+
 
 
 
@@ -231,7 +279,26 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        # copy the current bucket
+        oldBucket = self.bucket
+        # create a new, empty bucket with new_capacity length
+        self.bucket = [None] * new_capacity
+        self.count = 0
+        self.capacity = new_capacity
+        index = 0
+
+        while index < len(oldBucket):
+            cur_node = oldBucket[index]
+
+            if cur_node is not None:
+                next_node = cur_node.next
+                cur_node.next = None
+                self.put(cur_node.key, cur_node.value)
+                oldBucket[index] = next_node
+            elif cur_node is None:
+                # index ONLY increments when cur_node is None
+                index += 1
+
 
 
 
